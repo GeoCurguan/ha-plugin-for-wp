@@ -9,7 +9,7 @@ Author URI: URL de tu sitio web o empresa
 License: Licencia del plugin
 */
 
-function hola_mundo(){
+function experiencies_management_main(){
   echo 'Hola desde el Dashboard de Wordpress';
 }
 
@@ -19,7 +19,7 @@ function agregar_pagina_menu() {
       'HeyAndes Dashboard', // Texto del menú
       'manage_options', // Capacidad requerida para verla
       'mi-plugin', // Slug
-      'hola_mundo', // Nombre de la función de devolución de llamada
+      'experiencies_management_main', // Nombre de la función de devolución de llamada
       'dashicons-admin-plugins',
       99 // Posición
   );
