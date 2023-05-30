@@ -18,10 +18,10 @@ function agregar_pagina_menu() {
       'HeyAndes Dashboard', // Título de la página
       'HeyAndes Dashboard', // Texto del menú
       'manage_options', // Capacidad requerida para verla
-      'mi-plugin', // Slug de la página
+      'mi-plugin', // Slug
       'hola_mundo', // Nombre de la función de devolución de llamada
-      'dashicons-admin-plugins', // Icono (opcional)
-      99 // Posición en el menú (opcional)
+      'dashicons-admin-plugins',
+      99 // Posición
   );
 }
 add_action('admin_menu', 'agregar_pagina_menu');
