@@ -24,8 +24,17 @@ function experiencies_management_main(){
 		$data = json_decode($json_data);	
 		if(isset($data)){
 			echo "Agencia conectada correctamente";
-			global $wbdb;
-			$resultados = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}posts");
+			global $wpdb;
+			$new_table = $wpdb->prefix . 'uploaded_experiencies';
+			
+			//Mejorar consulta para que no compare con cada ejecucion
+			$create_table = 'CREATE TABLE IF NOT EXISTS  $new_table(
+				id INT,
+				key_experience VARCHAR(255),
+				meta_data LONGTEXT
+			)';
+			
+			//$resultados = $wpdb->get_results("INSERT INTO {$wpdb->prefix}uploaded_experieces");
 			var_dump($resultados);
 			//$agency_name = $data->fields->name->stringValue;
 		}else{
@@ -39,6 +48,8 @@ function experiencies_management_main(){
     	echo '<label for="dato_input">Key de agencia: </label>';
         echo '<input type="text" id="agency_key" name="agency_key" value="' . esc_attr($agency_key) . '" />';
         echo '<input type="submit" name="save_agency" value="Guardar" class="button button-primary" /><br>';
+        //Crear boton para que actualice y no ejecute cada vez que se abra la pestaña
+        
     	echo '</form>';
 }
 
