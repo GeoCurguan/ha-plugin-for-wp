@@ -9,6 +9,9 @@ Author URI: URL de tu sitio web o empresa
 License: Licencia del plugin
 */
 
+include_once(plugin_dir_path(__FILE__) . './shortcodes/shortcodes.php');
+shotcodes_register();
+
 function experiencies_management_main(){
 	if (isset($_POST['save_agency'])) {
 		// Guardar el valor del input en la opción 'dato_guardado'
