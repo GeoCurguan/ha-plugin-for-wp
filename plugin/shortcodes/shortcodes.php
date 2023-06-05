@@ -75,12 +75,31 @@ function get_experience_includes($atts){
         }
         return $experience_includes[$atts['idx']];
     }
-    return 'This is a Include';
+    return 'This is an Include';
+}
+
+//Esta funcion podria devolver tanto la descripcion corta o larga, a partir del parametro de entrada
+function get_experience_short_description($atts){
+    $atts = shortcode_atts(array(
+        'key' => '',
+    ), $atts);
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'agency_experiences_data';
+    $existing_row = $wpdb->get_row(
+        $wpdb->prepare(
+            "SELECT meta_value FROM $table_name WHERE experience_key = %s AND meta_key = 'ha_experience_short_description' LIMIT 1",
+            $atts['key'],
+    ));
+    if($existing_row){
+        return $existing_row->meta_value;
+    }
+    return 'This is an short description';
 }
 
 function shortcodes_register(){
     add_shortcode('experience_price', 'get_experience_price');
     add_shortcode('experience_name', 'get_experience_name');
     add_shortcode('experience_includes', 'get_experience_includes');
+    add_shortcode('experience_short_desc', 'get_experience_short_description');
 }
 ?>
