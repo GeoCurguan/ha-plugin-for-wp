@@ -4,7 +4,7 @@ Plugin Name: HA Plugin
 Plugin URI: URL del sitio web del plugin
 Description: Conecta los datos de tu agencia en HeyAndes con tu sitio de Wordpress
 Version: 1.0.0
-Author: Hey Andes SPA
+Author: Geovanni Curguan
 Author URI: URL de tu sitio web o empresa
 License: Licencia del plugin
 */
@@ -36,13 +36,12 @@ function experiencies_management_main(){
 	$agency_key = get_option('key_agency');
 	if($agency_key){
 		//Mejorar a que esta información sólo se guarde cuando se conecta con la key, y no cada vez que ingresa al dashboard
-		//$url = "https://firestore.googleapis.com/v1/projects/heyandes-web/databases/(default)/documents/agency/" . $agency_key . "/experiences";
+	    
         $url = "https://firestore.googleapis.com/v1/projects/heyandesbooker-88007/databases/(default)/documents/agency/" . $agency_key . "/experiences";
         $json_data = file_get_contents($url);
 		$data = json_decode($json_data);
 		if(isset($data)){
 			echo "Agencia conectada Correctamente <br>";
-
 			foreach ($data->documents as $document) {
 				//Acá recolectamos la información de las experiencias para subirla a la base de datos de Wordpress
 				$fields = $document->fields;
@@ -51,8 +50,14 @@ function experiencies_management_main(){
                 (isset($fields->isActive->booleanValue) ? ($fields->isActive->booleanValue === true) : true);
                 if($condition){
                     $experience_key = $fields->key->stringValue;
-                    $experience_price = $fields->valuePerPerson->integerValue;
                     $experience_name = $fields->name->stringValue;
+
+                    $experience_price = @$fields->priceQuantity->arrayValue->values;
+                    if(isset($experience_price) && is_array($experience_price) && count($experience_price) >= 2){
+                        $experience_price = serialize($experience_price);
+                    }else{
+                        $experience_price = $fields->valuePerPerson->integerValue;
+                    }
                     $rows = array(
                         array('meta_key' => 'ha_experience_price', 'meta_value' => $experience_price),
                         array('meta_key' => 'ha_experience_name', 'meta_value' => $experience_name)
@@ -61,7 +66,7 @@ function experiencies_management_main(){
                     foreach($rows as $row){
                         $existing_row = $wpdb->get_row(
                             $wpdb->prepare(
-                                "SELECT * FROM $table_name WHERE experience_key = %s AND meta_key = %s",
+                                "SELECT meta_id FROM $table_name WHERE experience_key = %s AND meta_key = %s",
                                 $experience_key,
                                 $row['meta_key']
                             )
