@@ -2,7 +2,9 @@
 function get_experience_price($atts){
     $atts = shortcode_atts(array(
             'key' => '',
-            'style' => 'normal'
+            'before' => '',
+            'after' => '',
+            'idx' => 0
     ), $atts);
     global $wpdb;
     $table_name = $wpdb->prefix . 'agency_experiences_data';
@@ -12,12 +14,22 @@ function get_experience_price($atts){
             $atts['key'],
         ));
     if($existing_row){
-        //Podria trabajarse un string que se vaya concatenando para cada caso (si es que sequiere usar sub por ejemplo), para hacerlo limpio
-        if($atts['style'] == 'normal'){
-            return '$' . number_format($existing_row->meta_value,0,',','.');
-        }else{
-            return '$'. number_format($existing_row->meta_value,0,',','.') . $atts['style'] ;
+        $experience_price = $existing_row->meta_value;
+        if(!is_numeric($experience_price)){
+            $experience_price = unserialize($experience_price);
+            if($atts['idx'] > count($experience_price)-1 || $atts['idx'] < 0){
+                $atts['idx'] = count($experience_price)-1;
+            }
+            $experience_price = $experience_price[$atts['idx']]->mapValue->fields->price->integerValue;
         }
+        $experience_price = '$' . number_format($experience_price,0,',','.');
+        if($atts['before'] !== ''){
+            $experience_price = $atts['before'] . $experience_price;
+        }
+        if($atts['after'] !== ''){
+            $experience_price .= $atts['after'];
+        }
+        return $experience_price;
     }else{
         return;
     }
