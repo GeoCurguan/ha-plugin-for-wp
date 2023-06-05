@@ -36,8 +36,7 @@ function get_experience_price($atts){
 
 }
 function get_experience_name(){
-    global $wpdb;
-    $table_name = $wpdb->prefix . 'agency_experiences_data';
+    //global $wpdb;
     return 'This is a experience name';
 }
 
