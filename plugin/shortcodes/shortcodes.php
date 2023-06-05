@@ -10,7 +10,7 @@ function get_experience_price($atts){
     $table_name = $wpdb->prefix . 'agency_experiences_data';
     $existing_row = $wpdb->get_row(
         $wpdb->prepare(
-            "SELECT meta_value FROM $table_name WHERE experience_key = %s AND meta_key = 'ha_experience_price'",
+            "SELECT meta_value FROM $table_name WHERE experience_key = %s AND meta_key = 'ha_experience_price' LIMIT 1",
             $atts['key'],
         ));
     if($existing_row){
@@ -30,18 +30,57 @@ function get_experience_price($atts){
             $experience_price .= $atts['after'];
         }
         return $experience_price;
-    }else{
-        return;
     }
-
+    return;
 }
-function get_experience_name(){
-    //global $wpdb;
-    return 'This is a experience name';
+function get_experience_name($atts){
+    $atts = shortcode_atts(array(
+            'key' => '',
+    ), $atts);
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'agency_experiences_data';
+    $existing_row = $wpdb->get_row(
+        $wpdb->prepare(
+            "SELECT meta_value FROM $table_name WHERE experience_key = %s AND meta_key = 'ha_experience_name' LIMIT 1",
+            $atts['key'],
+    ));
+    if($existing_row){
+    	$experience_name = $existing_row->meta_value;
+    	return $experience_name;
+    }
+    return;
 }
 
-function shotcodes_register(){
+function get_experience_includes($atts){
+    $atts = shortcode_atts(array(
+        'key' => '',
+        'idx' => 0,
+        'all' => 0
+    ), $atts);
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'agency_experiences_data';
+    $existing_row = $wpdb->get_row(
+        $wpdb->prepare(
+            "SELECT meta_value FROM $table_name WHERE experience_key = %s AND meta_key = 'ha_experience_includes' LIMIT 1",
+            $atts['key'],
+    ));
+    if($existing_row){
+        $experience_includes = unserialize($existing_row->meta_value);
+        if($atts['all']){
+            $includes = '';
+            foreach ($experience_includes as $include){
+                $includes .= $include . '<br>';
+            }
+            return $includes;
+        }
+        return $experience_includes[$atts['idx']];
+    }
+    return 'This is a Include';
+}
+
+function shortcodes_register(){
     add_shortcode('experience_price', 'get_experience_price');
     add_shortcode('experience_name', 'get_experience_name');
+    add_shortcode('experience_includes', 'get_experience_includes');
 }
 ?>
