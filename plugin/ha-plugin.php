@@ -52,6 +52,9 @@ function experiencies_management_main(){
                     $experience_key = $fields->key->stringValue;
                     $experience_name = $fields->name->stringValue;
 
+					$experience_includes = $fields->included->arrayValue->values;
+					$experience_includes = serialize($experience_includes);
+
                     $experience_price = @$fields->priceQuantity->arrayValue->values;
                     if(isset($experience_price) && is_array($experience_price) && count($experience_price) >= 2){
                         $experience_price = serialize($experience_price);
@@ -60,6 +63,7 @@ function experiencies_management_main(){
                     }
                     $rows = array(
                         array('meta_key' => 'ha_experience_price', 'meta_value' => $experience_price),
+						array('meta_key' => 'ha_experience_includes', 'meta_value' => $experience_includes),
                         array('meta_key' => 'ha_experience_name', 'meta_value' => $experience_name)
                     );
 
