@@ -10,7 +10,7 @@ License: Licencia del plugin
 */
 
 include_once(plugin_dir_path(__FILE__) . './shortcodes/shortcodes.php');
-shotcodes_register();
+shortcodes_register();
 
 function experiencies_management_main(){
 	if (isset($_POST['save_agency'])) {
@@ -36,8 +36,8 @@ function experiencies_management_main(){
 	$agency_key = get_option('key_agency');
 	if($agency_key){
 		//Mejorar a que esta información sólo se guarde cuando se conecta con la key, y no cada vez que ingresa al dashboard
-	    
-        $url = "https://firestore.googleapis.com/v1/projects/heyandesbooker-88007/databases/(default)/documents/agency/" . $agency_key . "/experiences";
+
+        $url = "https://firestore.googleapis.com/v1/projects/heyandes-web/databases/(default)/documents/agency/" . $agency_key . "/experiences";
         $json_data = file_get_contents($url);
 		$data = json_decode($json_data);
 		if(isset($data)){
@@ -52,7 +52,11 @@ function experiencies_management_main(){
                     $experience_key = $fields->key->stringValue;
                     $experience_name = $fields->name->stringValue;
 
-					$experience_includes = $fields->included->arrayValue->values;
+                    if(isset($fields->included->arrayValue->values)){
+                        $experience_includes = $fields->included->arrayValue->values;
+                    }else{
+                        $experience_includes = [];
+                    }
 					$experience_includes = serialize($experience_includes);
 
                     $experience_price = @$fields->priceQuantity->arrayValue->values;
