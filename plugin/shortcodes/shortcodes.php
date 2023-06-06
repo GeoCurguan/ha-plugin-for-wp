@@ -66,16 +66,22 @@ function get_experience_includes($atts){
     ));
     if($existing_row){
         $experience_includes = unserialize($existing_row->meta_value);
+        if(empty($experience_includes)){
+            return;
+        }
+        if($atts['idx'] > count($experience_includes)-1){
+            return $experience_includes[0]->stringValue;
+        }
         if($atts['all']){
             $includes = '';
             foreach ($experience_includes as $include){
-                $includes .= $include . '<br>';
+                $includes .= $include->stringValue . '<br>';
             }
             return $includes;
         }
-        return $experience_includes[$atts['idx']];
+        return $experience_includes[$atts['idx']]->stringValue;
     }
-    return 'This is an Include';
+    return;
 }
 
 //Esta funcion podria devolver tanto la descripcion corta o larga, a partir del parametro de entrada
