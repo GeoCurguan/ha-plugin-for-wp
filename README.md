@@ -18,4 +18,4 @@ El objetivo de este plugin es proporcionar una solución para acceder y utilzar 
 </ul>
 
 <h3>Recomendaciones</h3>
-Al instalar este plugin, se tendrá a disposición múltiples shortcodes, que puede ser útilizado en múltiples editores, pero se recomiendo Elementor.
+Al instalar este plugin, se tendrá a disposición múltiples shortcodes, que puede ser útilizado en múltiples editores, pero se recomienda utilizar Elementor.
