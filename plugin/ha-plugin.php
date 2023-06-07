@@ -6,7 +6,7 @@ Description: Conecta los datos de tu agencia en HeyAndes con tu sitio de Wordpre
 Version: 1.0.0
 Author: Geovanni Curguan
 Author URI: URL de tu sitio web o empresa
-License: Licencia del plugin
+License: MIT
 */
 
 include_once(plugin_dir_path(__FILE__) . './shortcodes/shortcodes.php');
@@ -52,29 +52,45 @@ function experiencies_management_main(){
                     $experience_key = $fields->key->stringValue;
                     $experience_name = $fields->name->stringValue;
 
-                    if(isset($fields->included->arrayValue->values)){
-                        $experience_includes = $fields->included->arrayValue->values;
-                    }else{
-                        $experience_includes = [];
-                    }
-					$experience_includes = serialize($experience_includes);
-
                     $experience_price = @$fields->priceQuantity->arrayValue->values;
                     if(isset($experience_price) && is_array($experience_price) && count($experience_price) >= 2){
                         $experience_price = serialize($experience_price);
                     }else{
                         $experience_price = $fields->valuePerPerson->integerValue;
                     }
+
+                    //Se debe comparar la fecha actual, con el de seasons. Considerar también si es pxq
+                    //Por tanto aun no se agrega a la bd de wp
+                    $experience_seasons = [];
+                    if(isset($fields->seasons->arrayValue->values)){
+                        $experience_seasons = $fields->seasons->arrayValue->values;
+                    }
+                    $experience_seasons = serialize($experience_seasons);
+
+                    $experience_addons = [];
+                    if(isset($fields->addons->arrayValue->values)){
+                        $experience_addons = $fields->addons->arrayValue->values;
+                    }
+                    $experience_addons = serialize($experience_addons);
+
+                    $experience_includes = [];
+                    if(isset($fields->included->arrayValue->values)){
+                        $experience_includes = $fields->included->arrayValue->values;
+                    }
+					$experience_includes = serialize($experience_includes);
+
                     $rows = array(
+                        array('meta_key' => 'ha_experience_name', 'meta_value' => $experience_name),
                         array('meta_key' => 'ha_experience_price', 'meta_value' => $experience_price),
-						array('meta_key' => 'ha_experience_includes', 'meta_value' => $experience_includes),
-                        array('meta_key' => 'ha_experience_name', 'meta_value' => $experience_name)
+                        array('meta_key' => 'ha_experience_addons', 'meta_value' => $experience_addons),
+						array('meta_key' => 'ha_experience_includes', 'meta_value' => $experience_includes)
+
                     );
 
                     foreach($rows as $row){
                         $existing_row = $wpdb->get_row(
                             $wpdb->prepare(
-                                "SELECT meta_id FROM $table_name WHERE experience_key = %s AND meta_key = %s",
+                                "SELECT meta_id FROM $table_name WHERE experience_key = %s AND meta_key = %s LIMIT 1",
                                 $experience_key,
                                 $row['meta_key']
                             )
