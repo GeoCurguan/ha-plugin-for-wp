@@ -52,20 +52,28 @@ function experiencies_management_main(){
                     $experience_key = $fields->key->stringValue;
                     $experience_name = $fields->name->stringValue;
 
-                    $experience_price = @$fields->priceQuantity->arrayValue->values;
-                    if(isset($experience_price) && is_array($experience_price) && count($experience_price) >= 2){
+                    if(isset($fields->priceQuantity->arrayValue->values)){
                         $experience_price = serialize($experience_price);
                     }else{
                         $experience_price = $fields->valuePerPerson->integerValue;
                     }
 
-                    //Se debe comparar la fecha actual, con el de seasons. Considerar también si es pxq
-                    //Por tanto aun no se agrega a la bd de wp
-                    $experience_seasons = [];
+                    //Revisar cuando una experiencia es pxq y tiene seasons
                     if(isset($fields->seasons->arrayValue->values)){
                         $experience_seasons = $fields->seasons->arrayValue->values;
+                        foreach($experience_seasons as $season){
+                            $season_values = $season->mapValue->fields;
+                            $today = date("Y-m-d");
+                            if($today > $season_values->startDate->stringValue && $today < $season_values->endDate->stringValue){
+                                $experience_price = $season_values->adultPrice->integerValue;
+                            }
+                        }
                     }
-                    $experience_seasons = serialize($experience_seasons);
+                    //Verifica si hay un cupón de descuento, para mostrar el precio con descuento.
+                    //Los cupones aplican a experiencias pxq?
+                    //Guardar como array, para tener info de fecha y así adaptarse si está activo o no
+
+
 
                     $experience_addons = [];
                     if(isset($fields->addons->arrayValue->values)){
