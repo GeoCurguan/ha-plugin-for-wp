@@ -41,6 +41,8 @@ function get_experience_price($atts){
 function get_experience_name($atts){
     $atts = shortcode_atts(array(
             'key' => '',
+            'before' => '',
+            'after' => ''
     ), $atts);
     global $wpdb;
     $table_name = $wpdb->prefix . 'agency_experiences_data';
@@ -50,8 +52,8 @@ function get_experience_name($atts){
             $atts['key'],
     ));
     if($existing_row){
-    	$experience_name = $existing_row->meta_value;
-    	return $experience_name;
+        $experience_name = $existing_row->meta_value;
+        return customize_string($experience_name, $atts['before'], $atts['after']);
     }
     return;
 }
@@ -76,7 +78,6 @@ function get_experience_addons($atts){
         if(empty($experience_addons)){
             return;
         }
-        //Acá se podría crear una función que maneje los string, cómo lo hace en precio
         if($atts['all']){
             $addons = '';
             foreach($experience_addons as $addon){
