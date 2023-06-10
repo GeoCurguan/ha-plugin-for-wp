@@ -37,7 +37,7 @@ function experiencies_management_main(){
 	if($agency_key){
 		//Mejorar a que esta información sólo se guarde cuando se conecta con la key, y no cada vez que ingresa al dashboard
 
-        $url = "https://firestore.googleapis.com/v1/projects/heyandes-web/databases/(default)/documents/agency/" . $agency_key . "/experiences";
+        $url = "https://firestore.googleapis.com/v1/projects/heyandes-web/databases/(default)/documents/agency/" . $agency_key . "/experiences?mask.fieldPaths=key&mask.fieldPaths=isActive&mask.fieldPaths=isDisable&mask.fieldPaths=isActive&mask.fieldPaths=priceQuantity&mask.fieldPaths=valuePerPerson&mask.fieldPaths=seasons&mask.fieldPaths=addons&mask.fieldPaths=included&mask.fieldPaths=name";
         $json_data = file_get_contents($url);
 		$data = json_decode($json_data);
 		if(isset($data)){
