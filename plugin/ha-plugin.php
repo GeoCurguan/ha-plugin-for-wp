@@ -35,96 +35,163 @@ function experiencies_management_main(){
 
 	$agency_key = get_option('key_agency');
 	if($agency_key){
-		//Mejorar a que esta información sólo se guarde cuando se conecta con la key, y no cada vez que ingresa al dashboard
-
         $url = "https://firestore.googleapis.com/v1/projects/heyandes-web/databases/(default)/documents/agency/" . $agency_key . "/experiences?mask.fieldPaths=key&mask.fieldPaths=isActive&mask.fieldPaths=isDisable&mask.fieldPaths=isActive&mask.fieldPaths=priceQuantity&mask.fieldPaths=valuePerPerson&mask.fieldPaths=seasons&mask.fieldPaths=addons&mask.fieldPaths=included&mask.fieldPaths=name";
-        $json_data = file_get_contents($url);
-		$data = json_decode($json_data);
-		if(isset($data)){
-			echo "Agencia conectada Correctamente <br>";
-			foreach ($data->documents as $document) {
-				//Acá recolectamos la información de las experiencias para subirla a la base de datos de Wordpress
-				$fields = $document->fields;
-				$condition = ($fields->key->stringValue != "string") &&
-                (isset($fields->isDisable->booleanValue) ? ($fields->isDisable->booleanValue === false) : true) &&
-                (isset($fields->isActive->booleanValue) ? ($fields->isActive->booleanValue === true) : true);
-                if($condition){
-                    $experience_key = $fields->key->stringValue;
-                    $experience_name = $fields->name->stringValue;
+		//Mejorar a que esta información sólo se guarde cuando se conecta con la key, y no cada vez que ingresa al dashboard
+        $nextPageToken = null;
+        do {
+            if ($nextPageToken) {
+                $url .= '&pageToken=' . $nextPageToken;
+            }
+            $json_data = file_get_contents($url);
+            $data = json_decode($json_data);
+            if(isset($data)){
+                echo "Agencia conectada Correctamente <br>";
+                //Si hay una agencia con muchos cupones, también habría que ocupar el pageToken
+                $url_coupons = "https://firestore.googleapis.com/v1/projects/heyandes-web/databases/(default)/documents/agency/" . $agency_key . "/coupons?mask.fieldPaths=isActive&mask.fieldPaths=days&mask.fieldPaths=experience&mask.fieldPaths=discount&mask.fieldPaths=startDate&mask.fieldPaths=code&mask.fieldPaths=expirationDate";
+                $json_data_coupons = file_get_contents($url_coupons);
+                $data_coupons = json_decode($json_data_coupons);
+                $coupons = [];
+                if(get_object_vars($data_coupons)){
+                    foreach ($data_coupons->documents as $document_coupon) {
+                        if($document_coupon->fields->isActive->booleanValue && isset($document_coupon->fields->days)){
+                            $is_any = $document_coupon->fields->experience->stringValue;
+                            $discount = $document_coupon->fields->discount->integerValue;
+                            $code = $document_coupon->fields->code->stringValue;
+                            //Consultar antes los días antes de continuar con el resto del código
+                            $expirationDate = new DateTime($document_coupon->fields->expirationDate->stringValue);
+                            $expirationDate = $expirationDate->format('Y-m-d');
 
-                    if(isset($fields->priceQuantity->arrayValue->values)){
-                        $experience_price = serialize($experience_price);
-                    }else{
-                        $experience_price = $fields->valuePerPerson->integerValue;
-                    }
-
-                    //Revisar cuando una experiencia es pxq y tiene seasons
-                    if(isset($fields->seasons->arrayValue->values)){
-                        $experience_seasons = $fields->seasons->arrayValue->values;
-                        foreach($experience_seasons as $season){
-                            $season_values = $season->mapValue->fields;
-                            $today = date("Y-m-d");
-                            if($today > $season_values->startDate->stringValue && $today < $season_values->endDate->stringValue){
-                                $experience_price = $season_values->adultPrice->integerValue;
+                            $startDate = new DateTime($document_coupon->fields->startDate->stringValue);
+                            $startDate = $startDate->format('Y-m-d');
+                            $days = $document_coupon->fields->days->arrayValue->values;
+                            if($is_any === "any"){
+                                if(!isset($coupons['any']) || $discount > $coupons['any']['discount']){
+                                    $coupons['any'] = array(
+                                        'discount' => $discount,
+                                        'code' => $code,
+                                        'expirationDate' => $expirationDate,
+                                        'startDate' => $startDate,
+                                        'days' => $days
+                                    );
+                                }
+                            }else{
+                                $is_any = explode("|", $is_any)[0];
+                                if(!isset($coupons[$is_any]) || $discount > $coupons[$is_any]['discount']){
+                                    $coupons[$is_any] = array(
+                                        'discount' => $discount,
+                                        'code' => $code,
+                                        'expirationDate' => $expirationDate,
+                                        'startDate' => $startDate,
+                                        'days' => $days
+                                    );
+                                }
                             }
                         }
                     }
-                    //Verifica si hay un cupón de descuento, para mostrar el precio con descuento.
-                    //Los cupones aplican a experiencias pxq?
-                    //Guardar como array, para tener info de fecha y así adaptarse si está activo o no
+                }
+                foreach ($data->documents as $document) {
+                    //Acá recolectamos la información de las experiencias para subirla a la base de datos de Wordpress
+                    $fields = $document->fields;
+                    $condition = ($fields->key->stringValue != "string") &&
+                    (isset($fields->isDisable->booleanValue) ? ($fields->isDisable->booleanValue === false) : true) &&
+                    (isset($fields->isActive->booleanValue) ? ($fields->isActive->booleanValue === true) : true);
+                    if($condition){
+                        $experience_key = $fields->key->stringValue;
+                        $experience_name = $fields->name->stringValue;
+
+                        if(isset($fields->priceQuantity->arrayValue->values)){
+                            $experience_price = serialize($fields->priceQuantity->arrayValue->values);
+                        }else{
+                            $experience_price = $fields->valuePerPerson->integerValue;
+                        }
+
+                        //Revisar cuando una experiencia es pxq y tiene seasons
+                        if(isset($fields->seasons->arrayValue->values)){
+                            $experience_seasons = $fields->seasons->arrayValue->values;
+                            foreach($experience_seasons as $season){
+                                $season_values = $season->mapValue->fields;
+                                $today = date("Y-m-d");
+                                if($today > $season_values->startDate->stringValue && $today < $season_values->endDate->stringValue){
+                                    $experience_price = $season_values->adultPrice->integerValue;
+                                }
+                            }
+                        }
+                        //Verifica si hay un cupón de descuento, para mostrar el precio con descuento.
+                        //Los cupones aplican a experiencias pxq?
+                        //Guardar como array, para tener info de fecha y así adaptarse si está activo o no
+                        if(isset($coupons[$experience_key])){
+                            if(isset($coupons['any'])){
+                                if($coupons[$experience_key]['discount'] > $coupons['any']['discount']){
+                                    $discount_apply = $coupons[$experience_key]['discount'];
+                                }else{
+                                    $discount_apply = $coupons['any']['discount'];
+                                }
+                            }else{
+                                $discount_apply = $coupons[$experience_key]['discount'];
+                            }
+                        }else if(isset($coupons['any'])){
+                            $discount_apply = $coupons['any']['discount'];
+                        }else{
+                            $discount_apply = 0;
+                        }
 
 
+                        $experience_addons = [];
+                        if(isset($fields->addons->arrayValue->values)){
+                            $experience_addons = $fields->addons->arrayValue->values;
+                        }
+                        $experience_addons = serialize($experience_addons);
 
-                    $experience_addons = [];
-                    if(isset($fields->addons->arrayValue->values)){
-                        $experience_addons = $fields->addons->arrayValue->values;
-                    }
-                    $experience_addons = serialize($experience_addons);
+                        $experience_includes = [];
+                        if(isset($fields->included->arrayValue->values)){
+                            $experience_includes = $fields->included->arrayValue->values;
+                        }
+                        $experience_includes = serialize($experience_includes);
 
-                    $experience_includes = [];
-                    if(isset($fields->included->arrayValue->values)){
-                        $experience_includes = $fields->included->arrayValue->values;
-                    }
-					$experience_includes = serialize($experience_includes);
-
-                    $rows = array(
-                        array('meta_key' => 'ha_experience_name', 'meta_value' => $experience_name),
-                        array('meta_key' => 'ha_experience_price', 'meta_value' => $experience_price),
-                        array('meta_key' => 'ha_experience_addons', 'meta_value' => $experience_addons),
-						array('meta_key' => 'ha_experience_includes', 'meta_value' => $experience_includes)
-
-                    );
-
-                    foreach($rows as $row){
-                        $existing_row = $wpdb->get_row(
-                            $wpdb->prepare(
-                                "SELECT meta_id FROM $table_name WHERE experience_key = %s AND meta_key = %s LIMIT 1",
-                                $experience_key,
-                                $row['meta_key']
-                            )
+                        $rows = array(
+                            array('meta_key' => 'ha_experience_name', 'meta_value' => $experience_name),
+                            array('meta_key' => 'ha_experience_price', 'meta_value' => $experience_price),
+                            array('meta_key' => 'ha_experience_addons', 'meta_value' => $experience_addons),
+                            array('meta_key' => 'ha_experience_includes', 'meta_value' => $experience_includes),
+                            array('meta_key' => 'ha_discount_coupon', 'meta_value' => $discount_apply)
                         );
-                        if($existing_row){
-                            $wpdb->update(
-                                $table_name,
-                                array('meta_value' => $row['meta_value']),
-                                array('meta_id' => $existing_row->meta_id)
-                            );
-                        } else{
-                            $wpdb->insert(
-                                $table_name,
-                                array(
-                                    'experience_key' => $experience_key,
-                                    'meta_key' => $row['meta_key'],
-                                    'meta_value' => $row['meta_value']
+
+                        foreach($rows as $row){
+                            $existing_row = $wpdb->get_row(
+                                $wpdb->prepare(
+                                    "SELECT meta_id FROM $table_name WHERE experience_key = %s AND meta_key = %s LIMIT 1",
+                                    $experience_key,
+                                    $row['meta_key']
                                 )
                             );
+                            if($existing_row){
+                                $wpdb->update(
+                                    $table_name,
+                                    array('meta_value' => $row['meta_value']),
+                                    array('meta_id' => $existing_row->meta_id)
+                                );
+                            } else{
+                                $wpdb->insert(
+                                    $table_name,
+                                    array(
+                                        'experience_key' => $experience_key,
+                                        'meta_key' => $row['meta_key'],
+                                        'meta_value' => $row['meta_value']
+                                    )
+                                );
+                            }
                         }
                     }
                 }
-			}
-		}else{
-			echo "Key de Agencia No registrada <br>";
-		}
+            }else{
+                echo "Key de Agencia No registrada <br>";
+            }
+            if (property_exists($data, 'nextPageToken')) {
+                $nextPageToken = $data->nextPageToken;
+            } else {
+                $nextPageToken = null;
+            }
+        } while ($nextPageToken);
 	}
     echo '<form method="post" action="">';
     echo '<label for="dato_input">Key de agencia: </label>';
