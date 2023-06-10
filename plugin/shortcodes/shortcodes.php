@@ -14,7 +14,8 @@ function get_experience_price($atts){
             'key' => '',
             'before' => '',
             'after' => '',
-            'idx' => 0
+            'idx' => 0,
+            'coupon' => 1
     ), $atts);
     global $wpdb;
     $table_name = $wpdb->prefix . 'agency_experiences_data';
@@ -31,6 +32,20 @@ function get_experience_price($atts){
                 $atts['idx'] = count($experience_price)-1;
             }
             $experience_price = $experience_price[$atts['idx']]->mapValue->fields->price->integerValue;
+        }
+        if($atts['coupon']){
+            $get_coupon_percent = $wpdb->get_row(
+                $wpdb->prepare(
+                "SELECT meta_value FROM $table_name WHERE experience_key = %s AND meta_key = 'ha_discount_coupon' LIMIT 1",
+                $atts['key'],
+            ));
+            if($get_coupon_percent){
+                $coupon_percent = $get_coupon_percent->meta_value;
+                $new_price = $experience_price*(1-$coupon_percent/100);
+                $new_price = '$' . number_format($new_price,0,',','.');
+                $experience_price = '$' . number_format($experience_price,0,',','.');
+                return '<sub><del>'. $experience_price . '</sub></del>' . customize_string($new_price, $atts['before'], $atts['after']);
+            }
         }
         $experience_price = '$' . number_format($experience_price,0,',','.');
         return customize_string($experience_price, $atts['before'], $atts['after']);
