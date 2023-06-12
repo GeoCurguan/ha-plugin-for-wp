@@ -60,7 +60,6 @@ function experiencies_management_main(){
                             //Consultar antes los días antes de continuar con el resto del código
                             $expirationDate = new DateTime($document_coupon->fields->expirationDate->stringValue);
                             $expirationDate = $expirationDate->format('Y-m-d');
-
                             $startDate = new DateTime($document_coupon->fields->startDate->stringValue);
                             $startDate = $startDate->format('Y-m-d');
                             $days = $document_coupon->fields->days->arrayValue->values;
@@ -75,6 +74,7 @@ function experiencies_management_main(){
                                     );
                                 }
                             }else{
+
                                 $is_any = explode("|", $is_any)[0];
                                 if(!isset($coupons[$is_any]) || $discount > $coupons[$is_any]['discount']){
                                     $coupons[$is_any] = array(
@@ -122,19 +122,22 @@ function experiencies_management_main(){
                         if(isset($coupons[$experience_key])){
                             if(isset($coupons['any'])){
                                 if($coupons[$experience_key]['discount'] > $coupons['any']['discount']){
-                                    $discount_apply = $coupons[$experience_key]['discount'];
+                                    $coupon_data = $coupons[$experience_key];
                                 }else{
-                                    $discount_apply = $coupons['any']['discount'];
+                                    $coupon_data = $coupons['any'];
                                 }
                             }else{
-                                $discount_apply = $coupons[$experience_key]['discount'];
+                                $coupon_data = $coupons[$experience_key];
                             }
                         }else if(isset($coupons['any'])){
-                            $discount_apply = $coupons['any']['discount'];
+                            $coupon_data = $coupons['any'];
                         }else{
-                            $discount_apply = 0;
+                            $coupon_data = array();
                         }
-
+                        //Si serializar o deserializar tiene un gran costo, se podria optar a guardar cada campo
+                        //Se podria guardar la data de los días, fecha en que estará activo y el porcentaje
+                        //Por otro lado el codigo asociado a la experiencia, de esa forma es un array más pequeño al deserializar por el shortcode
+                        $coupon_data = serialize($coupon_data);
 
                         $experience_addons = [];
                         if(isset($fields->addons->arrayValue->values)){
@@ -153,7 +156,7 @@ function experiencies_management_main(){
                             array('meta_key' => 'ha_experience_price', 'meta_value' => $experience_price),
                             array('meta_key' => 'ha_experience_addons', 'meta_value' => $experience_addons),
                             array('meta_key' => 'ha_experience_includes', 'meta_value' => $experience_includes),
-                            array('meta_key' => 'ha_discount_coupon', 'meta_value' => $discount_apply)
+                            array('meta_key' => 'ha_discount_coupon', 'meta_value' => $coupon_data)
                         );
 
                         foreach($rows as $row){
