@@ -40,11 +40,19 @@ function get_experience_price($atts){
                 $atts['key'],
             ));
             if($get_coupon_percent){
-                $coupon_percent = $get_coupon_percent->meta_value;
-                $new_price = $experience_price*(1-$coupon_percent/100);
-                $new_price = '$' . number_format($new_price,0,',','.');
-                $experience_price = '$' . number_format($experience_price,0,',','.');
-                return '<sub><del>'. $experience_price . '</sub></del>' . customize_string($new_price, $atts['before'], $atts['after']);
+                $coupon_data = unserialize($get_coupon_percent->meta_value);
+                $coupon_percent = $coupon_data['discount'];
+                $today = date("Y-m-d");
+                if($coupon_data['expirationDate'] > $today && $today > $coupon_data['startDate']){
+                    //Comprobar a continuación si se encuentra de los dias activos (days)
+                    $new_price = $experience_price*(1-$coupon_percent/100);
+                    $new_price = '$' . number_format($new_price,0,',','.');
+                    $experience_price = '$' . number_format($experience_price,0,',','.');
+                    return '<sub><del>'. $experience_price . '</sub></del>' . customize_string($new_price, $atts['before'], $atts['after']);
+                }else{
+                    $experience_price = '$' . number_format($experience_price,0,',','.');
+                    return customize_string($experience_price, $atts['before'], $atts['after']);
+                }
             }
         }
         $experience_price = '$' . number_format($experience_price,0,',','.');
