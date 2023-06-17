@@ -14,8 +14,7 @@ function get_experience_price($atts){
             'key' => '',
             'before' => '',
             'after' => '',
-            'idx' => 0,
-            'coupon' => 1
+            'idx' => 0
     ), $atts);
     global $wpdb;
     $table_name = $wpdb->prefix . 'agency_experiences_data';
@@ -28,32 +27,10 @@ function get_experience_price($atts){
         $experience_price = $existing_row->meta_value;
         if(!is_numeric($experience_price)){
             $experience_price = unserialize($experience_price);
-            if($atts['idx'] > count($experience_price)-1 || $atts['idx'] < 0){
+            if($atts['idx'] > count($experience_price)-1 || $atts['idx'] <= 0){
                 $atts['idx'] = count($experience_price)-1;
             }
             $experience_price = $experience_price[$atts['idx']]->mapValue->fields->price->integerValue;
-        }
-        if($atts['coupon']){
-            $get_coupon_percent = $wpdb->get_row(
-                $wpdb->prepare(
-                "SELECT meta_value FROM $table_name WHERE experience_key = %s AND meta_key = 'ha_discount_coupon' LIMIT 1",
-                $atts['key'],
-            ));
-            if($get_coupon_percent){
-                $coupon_data = unserialize($get_coupon_percent->meta_value);
-                $coupon_percent = $coupon_data['discount'];
-                $today = date("Y-m-d");
-                if($coupon_data['expirationDate'] > $today && $today > $coupon_data['startDate']){
-                    //Comprobar a continuación si se encuentra de los dias activos (days)
-                    $new_price = $experience_price*(1-$coupon_percent/100);
-                    $new_price = '$' . number_format($new_price,0,',','.');
-                    $experience_price = '$' . number_format($experience_price,0,',','.');
-                    return '<sub><del>'. $experience_price . '</sub></del>' . customize_string($new_price, $atts['before'], $atts['after']);
-                }else{
-                    $experience_price = '$' . number_format($experience_price,0,',','.');
-                    return customize_string($experience_price, $atts['before'], $atts['after']);
-                }
-            }
         }
         $experience_price = '$' . number_format($experience_price,0,',','.');
         return customize_string($experience_price, $atts['before'], $atts['after']);
@@ -148,23 +125,48 @@ function get_experience_includes($atts){
     return;
 }
 
-//Esta funcion podria devolver tanto la descripcion corta o larga, a partir del parametro de entrada
-//meta_key aun no se ingresa a la bd de wp
-function get_experience_short_description($atts){
+function get_experience_description($atts){
     $atts = shortcode_atts(array(
         'key' => '',
+        'short' => 0
+    ), $atts);
+    if($atts['short']){
+        $desc_type = 'ha_experience_short_desc';
+    }else{
+        $desc_type = 'ha_experience_desc';
+    }
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'agency_experiences_data';
+    $existing_row = $wpdb->get_row(
+        $wpdb->prepare(
+            "SELECT meta_value FROM $table_name WHERE experience_key = %s AND meta_key = %s LIMIT 1",
+            $atts['key'],
+            $desc_type,
+    ));
+    if($existing_row){
+        return $existing_row->meta_value;
+    }
+    return;
+}
+
+function get_experience_meeting($atts){
+    $atts = shortcode_atts(array(
+        'key' => '',
+        'short' => 0,
+        'before' => '',
+        'after' => '',
     ), $atts);
     global $wpdb;
     $table_name = $wpdb->prefix . 'agency_experiences_data';
     $existing_row = $wpdb->get_row(
         $wpdb->prepare(
-            "SELECT meta_value FROM $table_name WHERE experience_key = %s AND meta_key = 'ha_experience_short_description' LIMIT 1",
+            "SELECT meta_value FROM $table_name WHERE experience_key = %s AND meta_key = 'ha_experience_meeting_point' LIMIT 1",
             $atts['key'],
     ));
     if($existing_row){
-        return $existing_row->meta_value;
+        return customize_string($existing_row->meta_value, $atts['before'], $atts['after']);
     }
-    return 'This is an short description';
+    return;
 }
 
 function shortcodes_register(){
@@ -172,6 +174,7 @@ function shortcodes_register(){
     add_shortcode('experience_price', 'get_experience_price');
     add_shortcode('experience_addons', 'get_experience_addons');
     add_shortcode('experience_includes', 'get_experience_includes');
-    add_shortcode('experience_short_desc', 'get_experience_short_description');
+    add_shortcode('experience_desc', 'get_experience_description');
+    add_shortcode('experience_meeting', 'get_experience_meeting');
 }
 ?>
