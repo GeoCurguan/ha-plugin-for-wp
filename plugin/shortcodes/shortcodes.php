@@ -84,43 +84,54 @@ function get_experience_addons($atts){
                 $addons .= $addon->mapValue->fields->name->stringValue . customize_string(' $'. number_format($addon->mapValue->fields->price->integerValue,0,',','.'), $atts['before'], $atts['after']) . '<br>';
             }
         }
-        if($atts['idx'] > count($experience_addons)){
-            return $experience_addons[0]->mapValue->fields->name->stringValue;
+        if($atts['idx'] > count($experience_addons) || $atts['idx'] < 0){
+            return $experience_addons[0]->mapValue->fields->name->stringValue . customize_string(' $'. number_format($experience_addons[0]->mapValue->fields->price->integerValue,0,',','.'), $atts['before'], $atts['after']) . '<br>';;
         }
-        return $experience_addons[$atts['idx']]->mapValue->fields->name->stringValue . customize_string(' $'. number_format($experience_addons[$atts['idx']]->mapValue->fields->price->integerValue,0,',','.'), $atts['before'], $atts['after']) . '<br>';;
+        return $experience_addons[$atts['idx']]->mapValue->fields->name->stringValue . customize_string(' $'. number_format($experience_addons[$atts['idx']]->mapValue->fields->price->integerValue,0,',','.'), $atts['before'], $atts['after']) . '<br>';
     }
     return;
 }
 
-function get_experience_includes($atts){
+function get_experience_elements($atts){
     $atts = shortcode_atts(array(
         'key' => '',
+        'includes' => 0,
+        'required' => 0,
         'idx' => 0,
         'all' => 0
     ), $atts);
+    if($atts['includes'] === 0 && $atts['required'] === 0){
+        return;
+    }
+    if($atts['includes']){
+        $atribute = 'ha_experience_includes';
+    }else{
+        $atribute = 'ha_experience_equipment_required';
+    }
     global $wpdb;
     $table_name = $wpdb->prefix . 'agency_experiences_data';
     $existing_row = $wpdb->get_row(
         $wpdb->prepare(
-            "SELECT meta_value FROM $table_name WHERE experience_key = %s AND meta_key = 'ha_experience_includes' LIMIT 1",
+            "SELECT meta_value FROM $table_name WHERE experience_key = %s AND meta_key = %s LIMIT 1",
             $atts['key'],
+            $atribute
     ));
     if($existing_row){
-        $experience_includes = unserialize($existing_row->meta_value);
-        if(empty($experience_includes)){
+        $experience_elements = unserialize($existing_row->meta_value);
+        if(empty($experience_elements)){
             return;
         }
         if($atts['all']){
-            $includes = '';
-            foreach ($experience_includes as $include){
-                $includes .= $include->stringValue . '<br>';
+            $elements = '';
+            foreach ($experience_elements as $$element){
+                $elements .= $include->stringValue . '<br>';
             }
-            return $includes;
+            return $elements;
         }
-        if($atts['idx'] > count($experience_includes)-1){
-            return $experience_includes[0]->stringValue;
+        if($atts['idx'] > count($experience_elements)-1 || $atts['idx'] < 0){
+            return $experience_elements[0]->stringValue;
         }
-        return $experience_includes[$atts['idx']]->stringValue;
+        return $experience_elements[$atts['idx']]->stringValue;
     }
     return;
 }
@@ -152,7 +163,6 @@ function get_experience_description($atts){
 function get_experience_meeting($atts){
     $atts = shortcode_atts(array(
         'key' => '',
-        'short' => 0,
         'before' => '',
         'after' => '',
     ), $atts);
@@ -173,7 +183,7 @@ function shortcodes_register(){
     add_shortcode('experience_name', 'get_experience_name');
     add_shortcode('experience_price', 'get_experience_price');
     add_shortcode('experience_addons', 'get_experience_addons');
-    add_shortcode('experience_includes', 'get_experience_includes');
+    add_shortcode('experience_elements', 'get_experience_elements');
     add_shortcode('experience_desc', 'get_experience_description');
     add_shortcode('experience_meeting', 'get_experience_meeting');
 }
