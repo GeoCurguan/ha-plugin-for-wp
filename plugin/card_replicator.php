@@ -1,5 +1,26 @@
 use Elementor\Plugin;
 
+function searchProperties(&$data, $values_search){
+    foreach($data as $key => &$value){
+        if(is_array($value) && $key !== '__dynamic__'){
+            searchProperties($value, $values_search);
+        } else{
+            if($key === '__dynamic__'){
+                print_r($value);
+                echo "<br>";
+            }
+            if($key === 'custom_css'){
+                print_r($value);
+                echo "<br>";
+            }
+            if(in_array($key, $values_search)){
+                //print_r($value);
+                //echo "Valor encontrado: " . $value . "<br>";
+            }
+        }
+    }
+}
+
 function card_replicator() {
     // Obtén el contenido del template
     $template_id = 240; // ID del template de Elementor
