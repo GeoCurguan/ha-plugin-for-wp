@@ -3,7 +3,7 @@
 Plugin Name: HA Plugin
 Plugin URI: www.heyandes.com
 Description: Conecta los datos de tu agencia en HeyAndes con tu sitio de Wordpress
-Version: 1.0.1
+Version: 1.0.2
 Author: Geovanni Curguan
 Author URI: URL de tu sitio web o empresa
 License: MIT
@@ -162,9 +162,25 @@ function agregar_pagina_menu() {
             'mi-plugin', // Slug
             'experiencies_management_main', // Nombre de la función de devolución de llamada
             'dashicons-admin-plugins',
-        99 // Posición
+            99 // Posición
+    );
+
+    add_submenu_page(
+        'mi-plugin', // Slug de la pestaña principal
+        'Generador de Cards', // Título de la pestaña secundaria
+        'Cards', // Texto en la barra lateral
+        'manage_options', // Capacidad requerida para verla
+        'cards-generator', // Slug de la pestaña secundaria
+        'cards' // Nombre de la función de devolución de llamada
     );
 }
+function cards() {
+    // Aquí va el código para mostrar el contenido de la pestaña secundaria
+    echo '<label> Keys de Experiencias: </label>';
+    echo '<input type="text" placeholder="Separar por ," id="experiences_keys" name="experiences_keys" style="width: 600px;"/>';
+    echo '<input type="text" placeholder="Template ID" id="template_id" name="template_id"/>';
+}
+
 add_action('admin_menu', 'agregar_pagina_menu');
 
 ?>
