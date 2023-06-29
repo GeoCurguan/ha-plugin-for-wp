@@ -139,7 +139,7 @@ function get_experience_elements($atts){
 function get_experience_description($atts){
     $atts = shortcode_atts(array(
         'key' => '',
-        'short' => 0
+        'short' => 0,
     ), $atts);
     if($atts['short']){
         $desc_type = 'ha_experience_short_desc';
@@ -158,6 +158,41 @@ function get_experience_description($atts){
         return $existing_row->meta_value;
     }
     return;
+}
+
+function get_experience_duration($atts){
+    //Podria tener propiedades para poder agregarle alguna etiqueta con iconos.
+    $atts = shortcode_atts(array(
+        'key' => '',
+        'before' => '',
+        'after' => ''
+    ));
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'agency_experiences_data';
+    $existing_row = $wpdb->get_row(
+        $wpdb->prepare(
+            "SELECT meta_value FROM $table_name WHERE experience_key = %s AND meta_key = 'ha_duration' LIMIT 1",
+            $atts['key']
+    ));
+    if($existing_row){
+        return customize_string($existing_row->meta_value, $atts['before'], $atts['after']);
+    }
+}
+
+function get_experience_destination($atts){
+    $atts = shortcode_atts(array(
+        'key' => '',
+    ));
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'agency_experiences_data';
+    $existing_row = $wpdb->get_row(
+        $wpdb->prepare(
+            "SELECT meta_value FROM $table_name WHERE experience_key = %s AND meta_key = 'ha_destination' LIMIT 1",
+            $atts['key']
+    ));
+    if($existing_row){
+        return;
+    }
 }
 
 function get_experience_meeting($atts){
@@ -186,5 +221,7 @@ function shortcodes_register(){
     add_shortcode('experience_elements', 'get_experience_elements');
     add_shortcode('experience_desc', 'get_experience_description');
     add_shortcode('experience_meeting', 'get_experience_meeting');
+    add_shortcode('experience_destination','get_experience_destination');
+    add_shortcode('experience_duration', 'get_experience_duration');
 }
 ?>
