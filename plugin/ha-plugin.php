@@ -3,7 +3,7 @@
 Plugin Name: HA Plugin
 Plugin URI: www.heyandes.com
 Description: Conecta los datos de tu agencia en HeyAndes con tu sitio de Wordpress
-Version: 1.0.1
+Version: 1.0.2
 Author: Geovanni Curguan
 Author URI: URL de tu sitio web o empresa
 License: MIT
@@ -37,7 +37,7 @@ function experiencies_management_main(){
 	if($agency_key){
 		//Mejorar a que esta información sólo se guarde cuando se conecta con la key, y no cada vez que ingresa al dashboard
 
-        $url = "https://firestore.googleapis.com/v1/projects/heyandes-web/databases/(default)/documents/agency/" . $agency_key . "/experiences?mask.fieldPaths=key&mask.fieldPaths=isActive&mask.fieldPaths=isDisable&mask.fieldPaths=priceQuantity&mask.fieldPaths=valuePerPerson&mask.fieldPaths=seasons&mask.fieldPaths=addons&mask.fieldPaths=included&mask.fieldPaths=name&mask.fieldPaths=shortDescription&mask.fieldPaths=description&mask.fieldPaths=meetingPoint&mask.fieldPaths=equipmentRequired";
+        $url = "https://firestore.googleapis.com/v1/projects/heyandes-web/databases/(default)/documents/agency/" . $agency_key . "/experiences?mask.fieldPaths=key&mask.fieldPaths=isActive&mask.fieldPaths=isDisable&mask.fieldPaths=priceQuantity&mask.fieldPaths=valuePerPerson&mask.fieldPaths=seasons&mask.fieldPaths=addons&mask.fieldPaths=included&mask.fieldPaths=name&mask.fieldPaths=shortDescription&mask.fieldPaths=description&mask.fieldPaths=meetingPoint&mask.fieldPaths=equipmentRequired&mask.fieldPaths=binnacleStart&mask.fieldPaths=binnacleDuring&mask.fieldPaths=binnacleEnd&mask.fieldPaths=stringDuration";
         $json_data = file_get_contents($url);
 		$data = json_decode($json_data);
 		if(isset($data)){
@@ -82,7 +82,7 @@ function experiencies_management_main(){
 
                     $experience_meeting_point = "";
                     if(isset($fields->meetingPoint->stringValue)){
-                        $experience_meeting_point = $fields->meetingPoint->stringValue;
+                        $experience_meeting_point = ucfirst($fields->meetingPoint->stringValue);
                     }
 
                     $experience_equipment_required = [];
@@ -103,6 +103,24 @@ function experiencies_management_main(){
                     }
 					$experience_includes = serialize($experience_includes);
 
+                    $binnacle_start = $binnacle_during = $binacle_end = "";
+                    if(isset($fields->binnacleStart->stringValue)){
+                        $binnacle_start = ucfirst($fields->binnacleStart->stringValue);
+                    }
+                    if(isset($fields->binnacleDuring->stringValue)){
+                        $binnacle_during = ucfirst($fields->binnacleDuring->stringValue);
+                    }
+                    if(isset($fields->binnacleEnd->stringValue)){
+                        $binacle_end = ucfirst($fields->binnacleEnd->stringValue);
+                    }
+                    $experience_binnacle = [$binnacle_start, $binnacle_during, $binacle_end];
+                    $experience_binnacle = serialize($experience_binnacle);
+
+                    $experience_duration = "";
+                    if(isset($fields->stringDuration->stringValue)){
+                        $experience_duration = ucwords($fields->stringDuration->stringValue);
+                    }
+
                     $rows = array(
                         array('meta_key' => 'ha_experience_name', 'meta_value' => $experience_name),
                         array('meta_key' => 'ha_experience_price', 'meta_value' => $experience_price),
@@ -111,8 +129,9 @@ function experiencies_management_main(){
                         array('meta_key' => 'ha_experience_meeting_point', 'meta_value' => $experience_meeting_point),
                         array('meta_key' => 'ha_experience_equipment_required', 'meta_value' => $experience_equipment_required),
                         array('meta_key' => 'ha_experience_addons', 'meta_value' => $experience_addons),
-						array('meta_key' => 'ha_experience_includes', 'meta_value' => $experience_includes)
-
+						array('meta_key' => 'ha_experience_includes', 'meta_value' => $experience_includes),
+                        array('meta_key' => 'ha_experience_binnacle', 'meta_value' => $experience_binnacle),
+                        array('meta_key' => 'ha_experience_duration', 'meta_value' => $experience_duration)
                     );
 
                     foreach($rows as $row){
@@ -162,9 +181,25 @@ function agregar_pagina_menu() {
             'mi-plugin', // Slug
             'experiencies_management_main', // Nombre de la función de devolución de llamada
             'dashicons-admin-plugins',
-        99 // Posición
+            99 // Posición
+    );
+
+    add_submenu_page(
+        'mi-plugin', // Slug de la pestaña principal
+        'Generador de Cards', // Título de la pestaña secundaria
+        'Cards', // Texto en la barra lateral
+        'manage_options', // Capacidad requerida para verla
+        'cards-generator', // Slug de la pestaña secundaria
+        'cards' // Nombre de la función de devolución de llamada
     );
 }
+function cards() {
+    // Aquí va el código para mostrar el contenido de la pestaña secundaria
+    echo '<label> Keys de Experiencias: </label>';
+    echo '<input type="text" placeholder="Separar por ," id="experiences_keys" name="experiences_keys" style="width: 600px;"/>';
+    echo '<input type="text" placeholder="Template ID" id="template_id" name="template_id"/>';
+}
+
 add_action('admin_menu', 'agregar_pagina_menu');
 
 ?>
